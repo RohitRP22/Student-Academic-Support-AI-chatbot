@@ -2,10 +2,7 @@ import os
 import pandas as pd
 from dotenv import load_dotenv
 from typing import Annotated
-import datetime
-import csv
 
-from langchain_core.messages import BaseMessage
 from langchain.tools import StructuredTool
 from typing_extensions import TypedDict
 
@@ -14,8 +11,6 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from helpers import StudentRAGHelper
-
-import os
 from langchain_groq import ChatGroq
 
 load_dotenv()
@@ -29,14 +24,7 @@ class state(TypedDict):
     messages: Annotated[list[str], add_messages]
     # in this case, it appends the messages to the list, rather than replacing it.
     # the 'messages' key is a list of strings, which will be used to store the messages.
-graph_builder = StateGraph(state)
-
-# Node function to handle the START state
-def chatbot(state: state) -> str:
-    # this function will be called when the graph reaches the END state
-    # it will return the messages stored in the state as a single string
-    return {"messages":[llm.invoke(state["messages"])]}
-
+    
 # Initialize Student RAG Helper
 # -------------------------
 rag_helper = StudentRAGHelper()
@@ -51,7 +39,7 @@ def rag_query(query: str) -> str:
 
 rag_tool = StructuredTool.from_function(
     func=rag_query,
-    name="student_progress_lookup",   # 👈 match what LLM tried to call
+    name="student_progress_lookup",   
     description="Lookup student academic progress, marks, attendance, and assignments from the dataset."
 )
 
@@ -62,7 +50,7 @@ llm_with_tools = llm.bind_tools(tools)
 # Bind the tools to the LLM
 # This will allow the LLM to use the tools in its responses
 
-##Node definition
+# Node function to handle the START state
 def tool_calling_llm(state: state) -> str:
     """_summary_
 
@@ -72,6 +60,8 @@ def tool_calling_llm(state: state) -> str:
     Returns:
         str: _description_
     """
+    # this function will be called when the graph reaches the END state
+    # it will return the messages stored in the state as a single string
     return {"messages": [llm_with_tools.invoke(state["messages"])]}
 
 builder = StateGraph(state)
